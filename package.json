@@ -1,0 +1,29 @@
+{
+  "name": "day2-first-chatbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adare20441-dev/bell-Roma-chatbot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/adare20441-dev/bell-Roma-chatbot/issues"
+  },
+  "homepage": "https://github.com/adare20441-dev/bell-Roma-chatbot#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {}
+}

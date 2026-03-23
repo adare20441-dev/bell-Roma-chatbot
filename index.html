@@ -377,53 +377,7 @@
   const sendBtn     = document.getElementById('sendBtn');
   const typingEl    = document.getElementById('typingIndicator');
 
-  // Simple rule-based responses
-  const responses = [
-    {
-      keywords: ['hour', 'open', 'close', 'time', 'when'],
-      reply: "We're open Tuesday to Sunday:\n• Lunch: 12:00 – 15:00\n• Dinner: 18:00 – 22:30\nWe're closed on Mondays."
-    },
-    {
-      keywords: ['book', 'reserv', 'table', 'seat'],
-      reply: "We'd love to have you! You can book a table by calling us on +44 20 7946 0321, or simply let me know your preferred date, time, and party size and we'll check availability for you."
-    },
-    {
-      keywords: ['menu', 'food', 'dish', 'eat', 'pizza', 'pasta', 'starter', 'dessert'],
-      reply: "Our menu celebrates classic Italian cuisine with a modern touch. Highlights include:\n• Tagliatelle al Ragù Bolognese\n• Risotto ai Funghi Porcini\n• Margherita Napoletana pizza\n• Tiramisu della Casa\nFull menu available on request — shall I tell you about any dietary options?"
-    },
-    {
-      keywords: ['vegan', 'vegetarian', 'gluten', 'allerg', 'diet', 'dairy'],
-      reply: "We cater for many dietary requirements, including vegetarian, vegan, and gluten-free options. Please let our team know when booking or on arrival and we'll be happy to help."
-    },
-    {
-      keywords: ['address', 'location', 'where', 'find', 'direct', 'soho', 'london'],
-      reply: "You'll find us at:\n📍 14 Soho Square, London W1D 3QG\n\nNearest tube: Tottenham Court Road (Central & Northern lines), a 3-minute walk away."
-    },
-    {
-      keywords: ['park', 'car', 'drive'],
-      reply: "There's no dedicated parking at the restaurant, but the Q-Park on Newport Place (Chinatown) is approximately a 5-minute walk away."
-    },
-    {
-      keywords: ['price', 'cost', 'how much', 'expensive', 'cheap'],
-      reply: "Our mains range from £14 to £28. We also offer a set lunch menu at £22 for two courses or £27 for three courses, available Tuesday–Friday."
-    },
-    {
-      keywords: ['private', 'event', 'party', 'group', 'celebrat', 'birthday', 'anniversary'],
-      reply: "We have a private dining room that seats up to 24 guests — perfect for celebrations and corporate events. Please contact us at events@bellaroma.co.uk and we'll arrange everything for you."
-    },
-    {
-      keywords: ['phone', 'call', 'contact', 'email', 'reach'],
-      reply: "You can reach us at:\n📞 +44 20 7946 0321\n✉️ hello@bellaroma.co.uk\n\nOr just keep chatting here — we're happy to help!"
-    },
-    {
-      keywords: ['thank', 'thanks', 'grazie', 'great', 'perfect', 'helpful'],
-      reply: "Prego! 😊 It's our pleasure. We look forward to welcoming you to Bella Roma soon. Is there anything else I can help you with?"
-    },
-    {
-      keywords: ['hello', 'hi', 'hey', 'ciao', 'buon', 'good morning', 'good afternoon', 'good evening'],
-      reply: "Ciao! 👋 Great to hear from you. How can I help you today? I can assist with reservations, menu information, opening hours, and more."
-    },
-  ];
+  const conversationHistory = [];
 
   function getTimestamp() {
     return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -463,17 +417,7 @@
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  function getBotReply(input) {
-    const lower = input.toLowerCase();
-    for (const rule of responses) {
-      if (rule.keywords.some(kw => lower.includes(kw))) {
-        return rule.reply;
-      }
-    }
-    return "Thank you for your message! For anything I can't answer right away, please call us on +44 20 7946 0321 or email hello@bellaroma.co.uk and our team will be delighted to help.";
-  }
-
-  function sendMessage() {
+  async function sendMessage() {
     const text = userInput.value.trim();
     if (!text) return;
 
@@ -486,11 +430,32 @@
     typingEl.classList.add('visible');
     scrollToBottom();
 
-    setTimeout(() => {
+    conversationHistory.push({ role: 'user', content: text });
+
+    try {
+      const res = await fetch('https://bell-roma-chatbot-production.up.railway.app/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: conversationHistory }),
+      });
+
+      const data = await res.json();
       typingEl.classList.remove('visible');
-      appendMessage(getBotReply(text), 'bot');
+
+      if (res.ok) {
+        conversationHistory.push({ role: 'assistant', content: data.reply });
+        appendMessage(data.reply, 'bot');
+      } else {
+        conversationHistory.pop();
+        appendMessage('Sorry, something went wrong. Please try again or call us on +44 20 7946 0321.', 'bot');
+      }
+    } catch (err) {
+      conversationHistory.pop();
+      typingEl.classList.remove('visible');
+      appendMessage('Unable to reach the server. Please check your connection and try again.', 'bot');
+    } finally {
       sendBtn.disabled = false;
-    }, 900 + Math.random() * 600);
+    }
   }
 
   sendBtn.addEventListener('click', sendMessage);
