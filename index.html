@@ -398,6 +398,11 @@
   const sendBtn     = document.getElementById('sendBtn');
   const typingEl    = document.getElementById('typingIndicator');
 
+  // Use the same origin when running locally, fall back to Railway in production
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? ''
+    : 'https://bell-roma-chatbot-production.up.railway.app';
+
   const conversationHistory = [];
 
   function getTimestamp() {
@@ -454,7 +459,7 @@
     conversationHistory.push({ role: 'user', content: text });
 
     try {
-      const res = await fetch('https://bell-roma-chatbot-production.up.railway.app/chat', {
+      const res = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: conversationHistory }),
@@ -498,7 +503,7 @@
 
   // New conversation button
   document.getElementById('newConvoBtn').addEventListener('click', async () => {
-    await fetch('https://bell-roma-chatbot-production.up.railway.app/reset');
+    await fetch(`${API_BASE}/reset`);
     conversationHistory.length = 0;
 
     // Remove all messages except the typing indicator
